@@ -1,5 +1,6 @@
 # Executar com: docker-compose up -d
-# Cria banco de dados MySQL ada_db com usuário root e senha root
+# Cria banco de dados MySQL ada_db com usuário root e senha root na porta 3306
+# Cria server keycloak com usuário admin e senha admin na porta 8088
 version: '3.8'
 services:
   mysql:
@@ -11,6 +12,21 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.0.1
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: mysql
+      KC_DB_URL_HOST: mysql
+      KC_DB_URL_PORT: 3306
+      KC_DB_USERNAME: root
+      KC_DB_PASSWORD: root
+    command: start-dev
+    ports:
+      - "8088:8088"
+    depends_on:
+      - mysql
 
 volumes:
   mysql_data:
