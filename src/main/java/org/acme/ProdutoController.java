@@ -1,5 +1,6 @@
 package org.acme;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
@@ -18,6 +19,7 @@ import jakarta.ws.rs.core.Response;
 @Consumes("application/json")
 public class ProdutoController {
     @GET
+    @RolesAllowed({"user", "admin"})
     public Response listarProdutos() {
         return Response.ok()
             .entity(Produto.listAll())
@@ -26,6 +28,7 @@ public class ProdutoController {
 
     @GET
     @Path("/{id}")
+    @RolesAllowed({"user", "admin"})
     public Response obterProduto(Long id) {
         Produto produto = Produto.findById(id);
         if (produto == null) {
@@ -40,6 +43,7 @@ public class ProdutoController {
 
     @POST
     @Transactional
+    @RolesAllowed("admin")
     public Response criarProduto(Produto produto) {
         try {
             produto.persist();
@@ -57,6 +61,7 @@ public class ProdutoController {
     @PUT
     @Transactional
     @Path("/{id}")
+    @RolesAllowed("admin")
     public Response atualizarProduto(Long id, Produto dadosAtualizados) {
         Produto produto = Produto.findById(id);
         if (produto == null) { 
@@ -84,6 +89,7 @@ public class ProdutoController {
     @DELETE
     @Transactional
     @Path("/{id}")
+    @RolesAllowed("admin")
     public Response deletarProduto(Long id) {
         Produto produto = Produto.findById(id);
         if (produto == null) { 
