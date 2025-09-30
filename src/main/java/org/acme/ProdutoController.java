@@ -12,7 +12,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 
-
 @ApplicationScoped
 @Path("/produtos")
 @Produces("application/json")
@@ -70,9 +69,9 @@ public class ProdutoController {
                     .build();
         }
         try {
-            produto.nome = dadosAtualizados.nome;
-            produto.descricao = dadosAtualizados.descricao;
-            produto.preco = dadosAtualizados.preco;
+            if (dadosAtualizados.nome != null && !dadosAtualizados.nome.isBlank()) { produto.nome = dadosAtualizados.nome; }
+            if (dadosAtualizados.descricao != null && !dadosAtualizados.descricao.isBlank()) { produto.descricao = dadosAtualizados.descricao; }
+            if (dadosAtualizados.preco != null && dadosAtualizados.preco > 0) { produto.preco = dadosAtualizados.preco; }
             produto.persist();
 
             return Response.ok()
