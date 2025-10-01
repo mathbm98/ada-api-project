@@ -1,5 +1,7 @@
 # Executar com: docker-compose up -d
 # Cria banco de dados MySQL ada_db com usuário root e senha root na porta 3306
+# Cria server keycloak, user admin e senha admin, porta 8088
+# Cria client Redis para cache, porta 6379
 services:
   mysql:
     image: mysql:8.0

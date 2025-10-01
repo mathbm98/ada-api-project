@@ -1,5 +1,9 @@
 package org.acme;
 
+import org.acme.dto.ProdutoDTO;
+import org.acme.services.NoCacheException;
+import org.acme.services.RedisService;
+
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -17,6 +21,12 @@ import jakarta.ws.rs.core.Response;
 @Produces("application/json")
 @Consumes("application/json")
 public class ProdutoController {
+    RedisService redisService;
+
+    public ProdutoController(RedisService redisService) {
+        this.redisService = redisService;
+    }
+    
     @GET
     @RolesAllowed({"user", "admin"})
     public Response listarProdutos() {
@@ -29,15 +39,33 @@ public class ProdutoController {
     @Path("/{id}")
     @RolesAllowed({"user", "admin"})
     public Response obterProduto(Long id) {
-        Produto produto = Produto.findById(id);
-        if (produto == null) {
-            return Response.status(404)
-                    .entity("Produto não encontrado.")
+        try {
+            ProdutoDTO produto = new ProdutoDTO(
+                redisService.hget(id, "nome"),
+                redisService.hget(id, "descricao"),
+                Double.valueOf(redisService.hget(id, "preco"))
+            );
+            return Response.ok()
+                    .entity(produto)
                     .build();
         }
-        return Response.ok()
-                .entity(produto)
-                .build();
+        catch (NoCacheException e) {
+            Produto produto = Produto.findById(id);
+            if (produto == null) {
+                return Response.status(404)
+                        .entity("Produto não encontrado.")
+                        .build();
+            }
+        
+            redisService.hset(id, "nome", produto.nome);
+            redisService.hset(id, "descricao", produto.descricao);
+            redisService.hset(id, "preco", String.valueOf(produto.preco));
+
+            return Response.ok()
+                    .entity(produto)
+                    .build();    
+        }
+        
     }
 
     @POST
