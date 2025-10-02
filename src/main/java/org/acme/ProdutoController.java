@@ -1,8 +1,7 @@
 package org.acme;
 
 import org.acme.dto.ProdutoDTO;
-import org.acme.services.NoCacheException;
-import org.acme.services.RedisService;
+import org.acme.services.CacheService;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -21,10 +20,10 @@ import jakarta.ws.rs.core.Response;
 @Produces("application/json")
 @Consumes("application/json")
 public class ProdutoController {
-    RedisService redisService;
+    CacheService cacheService;
 
-    public ProdutoController(RedisService redisService) {
-        this.redisService = redisService;
+    public ProdutoController(CacheService cacheService) {
+        this.cacheService = cacheService;
     }
     
     @GET
@@ -39,17 +38,13 @@ public class ProdutoController {
     @Path("/{id}")
     @RolesAllowed({"user", "admin"})
     public Response obterProduto(Long id) {
-        try {
-            ProdutoDTO produto = new ProdutoDTO(
-                redisService.hget(id, "nome"),
-                redisService.hget(id, "descricao"),
-                Double.valueOf(redisService.hget(id, "preco"))
-            );
+        if (cacheService.isCached(id)) {
+            ProdutoDTO produtoDTO = cacheService.redisGet(id);
             return Response.ok()
-                    .entity(produto)
+                    .entity(produtoDTO)
                     .build();
         }
-        catch (NoCacheException e) {
+        else {
             Produto produto = Produto.findById(id);
             if (produto == null) {
                 return Response.status(404)
@@ -57,9 +52,7 @@ public class ProdutoController {
                         .build();
             }
         
-            redisService.hset(id, "nome", produto.nome);
-            redisService.hset(id, "descricao", produto.descricao);
-            redisService.hset(id, "preco", String.valueOf(produto.preco));
+            cacheService.redisCaching(id, produto);
 
             return Response.ok()
                     .entity(produto)
@@ -125,9 +118,12 @@ public class ProdutoController {
                     .build();
         }
 
+        cacheService.redisDelete(id); // Remove do cache
         produto.delete();
+
         return Response.status(204)
             .entity("Produto id %d deletado com sucesso.".formatted(id))
             .build();
+
     }
 }
