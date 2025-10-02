@@ -25,6 +25,16 @@ public class ProdutoController {
     public ProdutoController(CacheService cacheService) {
         this.cacheService = cacheService;
     }
+
+    @GET
+    @Path("/cache")
+    public Response listarCache() {
+        return Response.ok()
+            .entity(cacheService.redisKeys()
+                .stream()
+                .map(id -> cacheService.redisGet(id)))
+            .build();
+    }
     
     @GET
     @RolesAllowed({"user", "admin"})
@@ -94,6 +104,8 @@ public class ProdutoController {
             if (dadosAtualizados.descricao != null && !dadosAtualizados.descricao.isBlank()) { produto.descricao = dadosAtualizados.descricao; }
             if (dadosAtualizados.preco != null && dadosAtualizados.preco > 0) { produto.preco = dadosAtualizados.preco; }
             produto.persist();
+
+            cacheService.redisDelete(id);
 
             return Response.ok()
                 .entity(produto)

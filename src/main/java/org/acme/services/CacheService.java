@@ -1,10 +1,14 @@
 package org.acme.services;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.acme.Produto;
 import org.acme.dto.ProdutoDTO;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
 public class CacheService {
     RedisService redisService;
 
@@ -39,6 +43,14 @@ public class CacheService {
     }
 
     public void redisDelete(Long id) {
+        if (!isCached(id)) {
+            return;
+        }
+
         redisService.del(id).await().atMost(Duration.ofSeconds(5));
+    }
+
+    public List<Long> redisKeys() {
+        return redisService.keys().await().atMost(Duration.ofSeconds(5));
     }
 }

@@ -2,6 +2,8 @@ package org.acme.services;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.List;
+
 import io.quarkus.redis.datasource.ReactiveRedisDataSource;
 import io.quarkus.redis.datasource.RedisDataSource;
 import io.quarkus.redis.datasource.hash.HashCommands;
@@ -23,9 +25,6 @@ public class RedisService {
 
     public String hget(Long id, String field) {
         String value = hashCommands.hget(id, field); 
-        if (value == null) {
-            throw new NoCacheException();
-        }
         return value;
     }
 
@@ -37,7 +36,7 @@ public class RedisService {
         return keyCommands.del(id).replaceWithVoid();
     }
 
-    // public Uni<List<String>> keys() {
-    //     return keyCommands.keys("*"); 
-    // }
+    public Uni<List<Long>> keys() {
+        return keyCommands.keys("*"); 
+    }
 }
